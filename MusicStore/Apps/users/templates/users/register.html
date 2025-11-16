@@ -1,0 +1,29 @@
+{% extends 'main/base.html' %}
+{% block title %}Регистрация - MusicStore{% endblock %}
+{% block content %}
+<div class="container py-5" style="max-width: 560px;">
+    <h2 class="mb-4">Регистрация</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {% for field in form %}
+            <div class="mb-3">
+                <label class="form-label">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}
+                    <div class="form-text">{{ field.help_text }}</div>
+                {% endif %}
+                {{ field.errors }}
+            </div>
+        {% endfor %}
+        <button class="btn btn-primary" type="submit">Создать аккаунт</button>
+        <a class="btn btn-link" href="{% url 'login' %}">У меня уже есть аккаунт</a>
+    </form>
+    <script>
+        document.querySelectorAll('input').forEach(i=>i.classList.add('form-control'))
+    </script>
+    
+</div>
+{% endblock %}
+
+

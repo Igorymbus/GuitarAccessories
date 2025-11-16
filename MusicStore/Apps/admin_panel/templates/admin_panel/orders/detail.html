@@ -1,0 +1,168 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block admin_title %}Заказ #{{ order.orders_id }}{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <h2><i class="bi bi-receipt"></i> Заказ #{{ order.orders_id }}</h2>
+    <p class="text-muted mb-0">
+        <a href="{% url 'admin_orders' %}" class="text-decoration-none">
+            <i class="bi bi-arrow-left"></i> Вернуться к списку заказов
+        </a>
+    </p>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Товары в заказе -->
+        <div class="admin-card mb-3">
+            <h4><i class="bi bi-box"></i> Товары в заказе</h4>
+            {% if order_items %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Товар</th>
+                            <th>Количество</th>
+                            <th>Цена</th>
+                            <th>Сумма</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order_items %}
+                        <tr>
+                            <td>{{ item.order_items_product.products_name }}</td>
+                            <td>{{ item.order_items_quantity }} шт.</td>
+                            <td>{{ item.order_items_price_at_purchase|floatformat:2 }} ₽</td>
+                            <td><strong>{% widthratio item.order_items_quantity 1 item.order_items_price_at_purchase as item_total %}{{ item_total|floatformat:2 }} ₽</strong></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th colspan="3">Итого:</th>
+                            <th>{{ order.orders_total_amount|floatformat:2 }} ₽</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted">Товары не найдены</p>
+            {% endif %}
+        </div>
+        
+        <!-- Информация о заказе -->
+        <div class="admin-card">
+            <h4><i class="bi bi-info-circle"></i> Информация о заказе</h4>
+            {% if is_cancelled_order %}
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i> 
+                    <strong>Заказ отменен!</strong> Этот заказ заблокирован и не может быть изменен.
+                </div>
+            {% endif %}
+            <form method="post" {% if is_cancelled_order %}onsubmit="return false;"{% endif %}>
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label for="{{ form.orders_status.id_for_label }}" class="form-label">
+                        {{ form.orders_status.label }} <span class="text-danger">*</span>
+                    </label>
+                    {% if is_cancelled_order %}
+                        <input type="text" class="form-control" value="{{ order.orders_status.order_statuses_name }}" disabled>
+                        <input type="hidden" name="orders_status" value="{{ order.orders_status.order_statuses_id }}">
+                    {% else %}
+                        {{ form.orders_status }}
+                    {% endif %}
+                    {% if form.orders_status.errors %}
+                        <div class="text-danger small">{{ form.orders_status.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <label for="{{ form.orders_comment.id_for_label }}" class="form-label">
+                        {{ form.orders_comment.label }}
+                    </label>
+                    {% if is_cancelled_order %}
+                        <textarea class="form-control" rows="3" disabled>{{ order.orders_comment|default:"" }}</textarea>
+                        <input type="hidden" name="orders_comment" value="{{ order.orders_comment|default:"" }}">
+                    {% else %}
+                        {{ form.orders_comment }}
+                    {% endif %}
+                    {% if form.orders_comment.errors %}
+                        <div class="text-danger small">{{ form.orders_comment.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                {% if not is_cancelled_order %}
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Сохранить изменения
+                    </button>
+                {% else %}
+                    <button type="button" class="btn btn-secondary" disabled>
+                        <i class="bi bi-lock"></i> Заказ заблокирован
+                    </button>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Информация о пользователе -->
+        <div class="admin-card mb-3">
+            <h5><i class="bi bi-person"></i> Пользователь</h5>
+            <p class="mb-1"><strong>Email:</strong> {{ order.orders_user.users_email }}</p>
+            <p class="mb-1"><strong>Имя:</strong> {{ order.orders_user.users_first_name }} {{ order.orders_user.users_last_name }}</p>
+            <p class="mb-1"><strong>Телефон:</strong> {{ order.orders_user.users_phone|default:"—" }}</p>
+            <a href="{% url 'admin_user_detail' order.orders_user.users_id %}" class="btn btn-sm btn-outline-primary mt-2">
+                <i class="bi bi-eye"></i> Просмотреть профиль
+            </a>
+        </div>
+        
+        <!-- Доставка и оплата -->
+        <div class="admin-card mb-3">
+            <h5><i class="bi bi-truck"></i> Доставка и оплата</h5>
+            <p class="mb-1"><strong>Способ доставки:</strong> 
+                {% if order.orders_delivery_method %}
+                    {{ order.orders_delivery_method.delivery_methods_name }}
+                    {% if order.orders_delivery_method.delivery_methods_cost %}
+                        ({{ order.orders_delivery_method.delivery_methods_cost|floatformat:2 }} ₽)
+                    {% endif %}
+                {% else %}
+                    <span class="text-muted">—</span>
+                {% endif %}
+            </p>
+            <p class="mb-1"><strong>Способ оплаты:</strong> 
+                {% if order.orders_payment_method %}
+                    {{ order.orders_payment_method.payment_methods_name }}
+                {% else %}
+                    <span class="text-muted">—</span>
+                {% endif %}
+            </p>
+            <p class="mb-1"><strong>Адрес доставки:</strong></p>
+            <p class="small text-muted">
+                {% if order.orders_address %}
+                    {{ order.orders_address.addresses_street }}, 
+                    {{ order.orders_address.addresses_city }}, 
+                    {{ order.orders_address.addresses_zip_code }}, 
+                    {{ order.orders_address.addresses_country }}
+                {% else %}
+                    <span class="text-muted">—</span>
+                {% endif %}
+            </p>
+        </div>
+        
+        <!-- Детали заказа -->
+        <div class="admin-card">
+            <h5><i class="bi bi-calendar"></i> Детали заказа</h5>
+            <p class="mb-1"><strong>Дата создания:</strong> {{ order.orders_date|date:"d.m.Y H:i" }}</p>
+            <p class="mb-1"><strong>Сумма заказа:</strong> <strong>{{ order.orders_total_amount|floatformat:2 }} ₽</strong></p>
+            <p class="mb-1"><strong>Статус:</strong> 
+                <span class="badge bg-{% if order.orders_status.order_statuses_name == 'Новый' %}warning{% elif order.orders_status.order_statuses_name == 'Доставлен' %}success{% elif order.orders_status.order_statuses_name == 'Отменен' %}danger{% else %}info{% endif %}">
+                    {{ order.orders_status.order_statuses_name }}
+                </span>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,62 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block admin_title %}Бренды{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header d-flex justify-content-between align-items-center">
+    <div>
+        <h2><i class="bi bi-tag"></i> Управление брендами</h2>
+        <p class="text-muted mb-0">Список всех брендов</p>
+    </div>
+    <a href="{% url 'admin_brand_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Добавить бренд
+    </a>
+</div>
+
+<div class="admin-card">
+    {% if brands %}
+    <div class="table-responsive">
+        <table class="table table-hover table-admin">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Название</th>
+                    <th>Логотип</th>
+                    <th>Описание</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for brand in brands %}
+                <tr>
+                    <td>{{ brand.brands_id }}</td>
+                    <td><strong>{{ brand.brands_name }}</strong></td>
+                    <td>
+                        {% if brand.brands_logo_url %}
+                            <img src="{{ brand.brands_logo_url }}" alt="{{ brand.brands_name }}" style="max-height: 50px;" onerror="this.style.display='none'">
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ brand.brands_description|truncatewords:10|default:"—" }}</td>
+                    <td>
+                        <a href="{% url 'admin_brand_edit' brand.brands_id %}" class="btn btn-sm btn-primary" title="Редактировать">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <a href="{% url 'admin_brand_delete' brand.brands_id %}" class="btn btn-sm btn-danger" title="Удалить">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center">
+        <i class="bi bi-info-circle"></i> Бренды не найдены
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

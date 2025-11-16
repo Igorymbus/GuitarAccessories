@@ -1,0 +1,175 @@
+{% extends 'main/base.html' %}
+
+{% load catalog_extras %}
+{% block title %}Главная - MusicStore{% endblock %}
+
+{% block content %}
+<style>
+    .home-hero{
+        background: radial-gradient(80% 70% at 0% 0%, #6a5af94d 0%, rgba(106,90,249,0) 60%),
+                    radial-gradient(70% 60% at 100% 20%, #00c2ff3b 0%, rgba(0,194,255,0) 60%),
+                    linear-gradient(135deg,#0b1220 0%, #121b2e 100%);
+        color:#fff;
+        padding: 80px 0 70px 0;
+        position: relative;
+        overflow: hidden;
+    }
+    .home-hero h1{font-weight:800;letter-spacing:.5px;line-height:1.2}
+    .home-hero p.lead{opacity:.9}
+    .btn-glow{color:#fff;border:none;padding:12px 22px;border-radius:10px;background:linear-gradient(135deg,#7b5cff 0%, #6a5af9 50%, #8a72ff 100%);box-shadow:0 12px 28px rgba(106,90,249,.35)}
+    .btn-glow:hover{filter:brightness(1.05);color:#fff}
+    .btn-ghost{border:1px solid rgba(255,255,255,.35);color:#fff;padding:12px 22px;border-radius:10px}
+    .feature{background:#fff;border-radius:12px;padding:18px 16px;box-shadow:0 6px 20px rgba(0,0,0,.06)}
+    .section-title{font-weight:700}
+    .card-product{border:0;border-radius:14px;overflow:hidden;box-shadow:0 10px 24px rgba(0,0,0,.08);transition:transform .12s ease,box-shadow .2s ease}
+    .card-product:hover{transform:translateY(-4px);box-shadow:0 16px 32px rgba(0,0,0,.12)}
+    .brand-tile{background:#fff;border-radius:12px;padding:16px;text-align:center;box-shadow:0 8px 22px rgba(0,0,0,.06)}
+    .category-tile{border-radius:14px;overflow:hidden;position:relative;height:140px;box-shadow:0 8px 22px rgba(0,0,0,.06);background:#f3f6fb}
+    .category-tile img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;filter:grayscale(.05) contrast(1.05) saturate(1.05);opacity:.88}
+    .category-tile .title{position:absolute;left:16px;bottom:12px;color:#0b1220;font-weight:700;background:#fff;padding:6px 10px;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.08)}
+    .wave{position:absolute;left:0;bottom:-1px}
+    @media (max-width: 575.98px){ .home-hero{padding:60px 0 40px 0} }
+</style>
+
+<!-- HERO -->
+<section class="home-hero">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
+                <h1 class="display-5 mb-3">
+                    Магазин музыкальных аксессуаров<br>для тех, кто играет по‑настоящему
+                </h1>
+                <p class="lead mb-4">
+                    Выбирайте струны, ремни, чехлы и десятки других аксессуаров. Только проверенные бренды и честные цены.
+                </p>
+                <div class="d-flex gap-3">
+                    <a href="{% url 'catalog' %}" class="btn btn-glow">
+                        <i class="bi bi-bag-plus"></i> Перейти в каталог
+                    </a>
+                    <a href="#products" class="btn btn-ghost">
+                        <i class="bi bi-lightning"></i> Популярное
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <svg class="wave" width="100%" height="90" preserveAspectRatio="none" viewBox="0 0 1200 120" aria-hidden="true">
+        <path d="M0 40 C 120 80, 240 0, 360 30 C 480 60, 600 110, 720 80 C 840 50, 960 10, 1200 40 L 1200 120 L 0 120 Z" fill="#ffffff"></path>
+    </svg>
+</section>
+
+<div class="container">
+    <!-- Фичи -->
+    <div class="row g-3 mt-4">
+        <div class="col-md-3 col-6"><div class="feature"><i class="bi bi-truck"></i> Доставка по РФ</div></div>
+        <div class="col-md-3 col-6"><div class="feature"><i class="bi bi-shield-check"></i> Гарантия качества</div></div>
+        <div class="col-md-3 col-6"><div class="feature"><i class="bi bi-credit-card"></i> Удобная оплата</div></div>
+        <div class="col-md-3 col-6"><div class="feature"><i class="bi bi-chat-dots"></i> Поддержка музыкантов</div></div>
+    </div>
+
+    <!-- Популярные товары -->
+    <section id="products" class="mt-5">
+        <h2 class="section-title mb-3"><i class="bi bi-stars"></i> Популярные товары</h2>
+        {% if latest_products %}
+        <div class="row g-4">
+            {% for product in latest_products %}
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <div class="card card-product h-100" style="cursor: pointer;" onclick="window.location.href='{% url 'product_detail' product.products_id %}'">
+                    {% with img=images_by_product|get_item:product.products_id %}
+                    {% if img %}
+                    <img src="{{ img }}" class="card-img-top" alt="{{ product.products_name }}" style="height: 210px; object-fit: cover;" onerror="this.src='https://via.placeholder.com/400x200?text=No+Image'">
+                    {% else %}
+                    <div class="d-flex align-items-center justify-content-center" style="height:210px;background:#f3f6fb;">
+                        <i class="bi bi-music-note-beamed" style="font-size:44px;color:#a2acc6"></i>
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+                    <div class="card-body">
+                        <h6 class="mb-1">
+                            <a href="{% url 'product_detail' product.products_id %}" class="text-decoration-none text-dark">
+                                {{ product.products_name|truncatewords:7 }}
+                            </a>
+                        </h6>
+                        <div class="text-muted small mb-2">{{ product.products_brand.brands_name }}</div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="h6 mb-0">{{ product.products_price|floatformat:2 }} ₽</span>
+                        <div class="btn-group" role="group" onclick="event.stopPropagation();">
+                            {% if user.is_authenticated %}
+                                {% if product.products_id in favorite_ids %}
+                                    <a href="{% url 'remove_from_favorites' product.products_id %}?next=home" class="btn btn-outline-danger btn-sm" title="Удалить из избранного">
+                                        <i class="bi bi-heart-fill"></i>
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'add_to_favorites' product.products_id %}?next=home" class="btn btn-outline-secondary btn-sm" title="Добавить в избранное">
+                                        <i class="bi bi-heart"></i>
+                                    </a>
+                                {% endif %}
+                                <a href="{% url 'add_to_cart' product.products_id %}?next=home" class="btn btn-sm btn-primary" title="Добавить в корзину">
+                                    <i class="bi bi-cart-plus"></i>
+                                </a>
+                            {% else %}
+                                <a href="{% url 'login' %}" class="btn btn-outline-secondary btn-sm" title="Войдите, чтобы добавить в избранное">
+                                    <i class="bi bi-heart"></i>
+                                </a>
+                                <a href="{% url 'login' %}" class="btn btn-outline-primary btn-sm" title="Войдите, чтобы добавить в корзину">
+                                    <i class="bi bi-cart-plus"></i>
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-info text-center"><i class="bi bi-info-circle"></i> Товары скоро появятся в каталоге</div>
+        {% endif %}
+    </section>
+
+    <!-- Категории -->
+    <section id="categories" class="mt-5">
+        <h2 class="section-title mb-3"><i class="bi bi-grid"></i> Разделы каталога</h2>
+        {% if categories %}
+        <div class="row g-4">
+            {% for category in categories %}
+            <div class="col-md-4 col-sm-6">
+                <div class="category-tile">
+                    {% with cimg=images_by_category|get_item:category.categories_id %}
+                    {% if cimg %}
+                    <img src="{{ cimg }}" alt="{{ category.categories_name }}" onerror="this.style.display='none'">
+                    {% endif %}
+                    {% endwith %}
+                    <div class="title">{{ category.categories_name }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-info text-center"><i class="bi bi-info-circle"></i> Категории скоро появятся</div>
+        {% endif %}
+    </section>
+
+    <!-- Бренды -->
+    <section id="brands" class="mt-5 mb-5">
+        <h2 class="section-title mb-3"><i class="bi bi-award"></i> Наши бренды</h2>
+        {% if brands %}
+        <div class="row g-3">
+            {% for brand in brands %}
+            <div class="col-md-2 col-6">
+                <div class="brand-tile">
+                    <i class="bi bi-tag text-primary" style="font-size: 1.6rem;"></i>
+                    <div class="small mt-2">{{ brand.brands_name }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-info text-center"><i class="bi bi-info-circle"></i> Бренды скоро появятся</div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}
+
+
+

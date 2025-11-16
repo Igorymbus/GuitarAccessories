@@ -1,0 +1,41 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block admin_title %}Удаление статуса заказа{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <h2><i class="bi bi-trash"></i> Удаление статуса заказа</h2>
+    <p class="text-muted mb-0">
+        <a href="{% url 'admin_order_statuses' %}" class="text-decoration-none">
+            <i class="bi bi-arrow-left"></i> Вернуться к списку статусов
+        </a>
+    </p>
+</div>
+
+<div class="admin-card">
+    {% if orders_count > 0 %}
+    <div class="alert alert-danger">
+        <i class="bi bi-exclamation-triangle"></i> 
+        Нельзя удалить статус "{{ status.order_statuses_name }}", так как он используется в {{ orders_count }} заказах!
+    </div>
+    <a href="{% url 'admin_order_statuses' %}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Вернуться
+    </a>
+    {% else %}
+    <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle"></i> Вы уверены, что хотите удалить статус "{{ status.order_statuses_name }}"?
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">
+            <i class="bi bi-trash"></i> Удалить
+        </button>
+        <a href="{% url 'admin_order_statuses' %}" class="btn btn-secondary">
+            <i class="bi bi-x"></i> Отмена
+        </a>
+    </form>
+    {% endif %}
+</div>
+{% endblock %}
+

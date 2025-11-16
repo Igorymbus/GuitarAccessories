@@ -1,0 +1,148 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block admin_title %}Дашборд{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <h2><i class="bi bi-speedometer2"></i> Панель управления</h2>
+    <p class="text-muted mb-0">Добро пожаловать в админ-панель MusicStore</p>
+</div>
+
+<!-- Статистика -->
+<div class="row">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <i class="bi bi-box" style="font-size: 2rem;"></i>
+            <h3>{{ stats.total_products }}</h3>
+            <p>Товаров</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <i class="bi bi-receipt" style="font-size: 2rem;"></i>
+            <h3>{{ stats.total_orders }}</h3>
+            <p>Заказов</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            <i class="bi bi-people" style="font-size: 2rem;"></i>
+            <h3>{{ stats.total_users }}</h3>
+            <p>Пользователей</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+            <i class="bi bi-exclamation-triangle" style="font-size: 2rem;"></i>
+            <h3>{{ stats.pending_orders }}</h3>
+            <p>Новых заказов</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Последние заказы -->
+    <div class="col-md-8">
+        <div class="admin-card">
+            <h4><i class="bi bi-receipt"></i> Последние заказы</h4>
+            {% if recent_orders %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Пользователь</th>
+                            <th>Дата</th>
+                            <th>Сумма</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in recent_orders %}
+                        <tr>
+                            <td>#{{ order.orders_id }}</td>
+                            <td>{{ order.orders_user.users_email }}</td>
+                            <td>{{ order.orders_date|date:"d.m.Y H:i" }}</td>
+                            <td>{{ order.orders_total_amount|floatformat:2 }} ₽</td>
+                            <td>
+                                <span class="badge bg-{% if order.orders_status.order_statuses_name == 'Новый' %}warning{% elif order.orders_status.order_statuses_name == 'Доставлен' %}success{% elif order.orders_status.order_statuses_name == 'Отменен' %}danger{% else %}info{% endif %}">
+                                    {{ order.orders_status.order_statuses_name }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{% url 'admin_order_detail' order.orders_id %}" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="text-center mt-3">
+                <a href="{% url 'admin_orders' %}" class="btn btn-primary">Все заказы</a>
+            </div>
+            {% else %}
+            <p class="text-muted">Заказов пока нет</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Товары с низким остатком -->
+    <div class="col-md-4">
+        <div class="admin-card">
+            <h4><i class="bi bi-exclamation-triangle text-warning"></i> Низкий остаток</h4>
+            {% if low_stock_products %}
+            <div class="list-group">
+                {% for product in low_stock_products %}
+                <a href="{% url 'admin_product_edit' product.products_id %}" class="list-group-item list-group-item-action">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">{{ product.products_name|truncatewords:5 }}</h6>
+                        <small class="text-{% if product.products_stock == 0 %}danger{% else %}warning{% endif %}">
+                            {{ product.products_stock }} шт.
+                        </small>
+                    </div>
+                    <small class="text-muted">{{ product.products_price|floatformat:2 }} ₽</small>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted">Все товары в наличии</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Быстрые действия -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="admin-card">
+            <h4><i class="bi bi-lightning"></i> Быстрые действия</h4>
+            <div class="row">
+                <div class="col-md-3">
+                    <a href="{% url 'admin_product_create' %}" class="btn-quick btn-quick-purple w-100 mb-2">
+                        <i class="bi bi-plus-circle"></i> Добавить товар
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'admin_category_create' %}" class="btn-quick btn-quick-green w-100 mb-2">
+                        <i class="bi bi-plus-circle"></i> Добавить категорию
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'admin_brand_create' %}" class="btn-quick btn-quick-cyan w-100 mb-2">
+                        <i class="bi bi-plus-circle"></i> Добавить бренд
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'admin_orders' %}" class="btn-quick btn-quick-amber w-100 mb-2">
+                        <i class="bi bi-list-check"></i> Все заказы
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

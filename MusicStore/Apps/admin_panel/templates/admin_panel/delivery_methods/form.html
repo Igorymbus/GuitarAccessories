@@ -1,0 +1,57 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block admin_title %}{{ action }} способ доставки{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <h2><i class="bi bi-truck"></i> {{ action }} способ доставки</h2>
+    <p class="text-muted mb-0">
+        <a href="{% url 'admin_delivery_methods' %}" class="text-decoration-none">
+            <i class="bi bi-arrow-left"></i> Вернуться к списку способов доставки
+        </a>
+    </p>
+</div>
+
+<div class="admin-card">
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+            <label for="delivery_methods_name" class="form-label">
+                Название способа доставки <span class="text-danger">*</span>
+            </label>
+            <input type="text" class="form-control" id="delivery_methods_name" name="delivery_methods_name" 
+                   value="{% if method %}{{ method.delivery_methods_name }}{% endif %}" required>
+            <small class="form-text text-muted">Например: Курьерская доставка, Самовывоз, Почта</small>
+        </div>
+        
+        <div class="mb-3">
+            <label for="delivery_methods_cost" class="form-label">
+                Стоимость доставки (₽)
+            </label>
+            <input type="number" class="form-control" id="delivery_methods_cost" name="delivery_methods_cost" 
+                   value="{% if method %}{{ method.delivery_methods_cost|default:0 }}{% else %}0{% endif %}" 
+                   step="0.01" min="0">
+            <small class="form-text text-muted">Укажите 0 для бесплатной доставки</small>
+        </div>
+        
+        <div class="mb-3">
+            <label for="delivery_methods_description" class="form-label">
+                Описание
+            </label>
+            <textarea class="form-control" id="delivery_methods_description" name="delivery_methods_description" rows="3">{% if method %}{{ method.delivery_methods_description|default:'' }}{% endif %}</textarea>
+            <small class="form-text text-muted">Описание способа доставки для клиентов</small>
+        </div>
+        
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save"></i> Сохранить
+            </button>
+            <a href="{% url 'admin_delivery_methods' %}" class="btn btn-secondary">
+                <i class="bi bi-x"></i> Отмена
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

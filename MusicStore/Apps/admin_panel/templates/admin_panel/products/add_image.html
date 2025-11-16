@@ -1,0 +1,55 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block admin_title %}Добавить изображение{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <h2><i class="bi bi-images"></i> Добавить изображение товара</h2>
+    <p class="text-muted mb-0">
+        <a href="{% url 'admin_product_edit' product.products_id %}" class="text-decoration-none">
+            <i class="bi bi-arrow-left"></i> Вернуться к товару
+        </a>
+    </p>
+</div>
+
+<div class="admin-card">
+    <div class="mb-3">
+        <h5>Товар: {{ product.products_name }}</h5>
+    </div>
+    
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <label for="{{ form.image_file.id_for_label }}" class="form-label">
+                {{ form.image_file.label }}
+            </label>
+            {{ form.image_file }}
+            {% if form.image_file.errors %}
+                <div class="text-danger small">{{ form.image_file.errors }}</div>
+            {% endif %}
+            <small class="form-text text-muted">Загрузите файл с компьютера.</small>
+        </div>
+        
+        <div class="mb-3 form-check">
+            {{ form.product_images_is_main }}
+            <label class="form-check-label" for="{{ form.product_images_is_main.id_for_label }}">
+                {{ form.product_images_is_main.label }}
+            </label>
+            {% if form.product_images_is_main.errors %}
+                <div class="text-danger small">{{ form.product_images_is_main.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save"></i> Добавить изображение
+            </button>
+            <a href="{% url 'admin_product_edit' product.products_id %}" class="btn btn-secondary">
+                <i class="bi bi-x"></i> Отмена
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

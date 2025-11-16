@@ -1,0 +1,49 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block admin_title %}Удаление заказа{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <h2><i class="bi bi-exclamation-triangle text-danger"></i> Удаление заказа</h2>
+</div>
+
+<div class="admin-card">
+    <div class="alert alert-warning">
+        <h5>Вы уверены, что хотите удалить этот заказ?</h5>
+        <p class="mb-0">Это действие нельзя отменить. Все связанные данные (товары заказа, история) также будут удалены.</p>
+    </div>
+    
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title">Заказ #{{ order.orders_id }}</h5>
+            <p class="card-text">
+                <strong>Пользователь:</strong> {{ order.orders_user.users_email }}<br>
+                <strong>Дата:</strong> {{ order.orders_date|date:"d.m.Y H:i" }}<br>
+                <strong>Сумма:</strong> {{ order.orders_total_amount|floatformat:2 }} ₽<br>
+                <strong>Статус:</strong> 
+                <span class="badge bg-{% if order.orders_status.order_statuses_name == 'Новый' %}warning{% elif order.orders_status.order_statuses_name == 'Доставлен' %}success{% elif order.orders_status.order_statuses_name == 'Отменен' %}danger{% else %}info{% endif %}">
+                    {{ order.orders_status.order_statuses_name }}
+                </span><br>
+                {% if order.orders_payment_method %}
+                <strong>Оплата:</strong> {{ order.orders_payment_method.payment_methods_name }}<br>
+                {% endif %}
+                {% if order.orders_delivery_method %}
+                <strong>Доставка:</strong> {{ order.orders_delivery_method.delivery_methods_name }}<br>
+                {% endif %}
+                <strong>Товаров в заказе:</strong> {{ order_items_count }} шт.
+            </p>
+        </div>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">
+            <i class="bi bi-trash"></i> Да, удалить
+        </button>
+        <a href="{% url 'admin_orders' %}" class="btn btn-secondary">
+            <i class="bi bi-x"></i> Отмена
+        </a>
+    </form>
+</div>
+{% endblock %}
+

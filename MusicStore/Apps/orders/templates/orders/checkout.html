@@ -1,0 +1,306 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Оформление заказа - MusicStore{% endblock %}
+
+{% block extra_css %}
+<style>
+    .checkout-wrap{--radius:16px}
+    .checkout-card{border:0;border-radius:var(--radius);box-shadow:0 10px 24px rgba(0,0,0,.08);overflow:hidden;background:#fff}
+    .checkout-card .card-header{background:#fff;border:0;padding:18px 20px}
+    .checkout-card .card-body{padding:20px}
+    .form-control, .form-select{border-radius:12px}
+    .summary{position:sticky; top:86px}
+    .summary-table td{padding:.5rem 0;border:0}
+    .summary-total{font-size:1.05rem}
+    .checkout-cta .btn-primary{padding:14px 16px;border-radius:12px}
+    .checkout-cta .btn-outline-secondary{border-radius:12px}
+    .hint{color:#6c757d}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4"><i class="bi bi-receipt"></i> Оформление заказа</h1>
+    
+    <div class="row checkout-wrap g-4">
+        <div class="col-md-8">
+            <div class="checkout-card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Данные доставки</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="orderForm">
+                        {% csrf_token %}
+                        
+                        <!-- Способ оплаты (перемещён вверх) -->
+                        <div class="mb-3">
+                            <label for="{{ form.payment_method.id_for_label }}" class="form-label">
+                                {{ form.payment_method.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.payment_method }}
+                            {% if form.payment_method.errors %}
+                                <div class="text-danger small">{{ form.payment_method.errors }}</div>
+                            {% endif %}
+                            {% if saved_card %}
+                                <div class="alert alert-info mt-2 mb-0">
+                                    <i class="bi bi-credit-card"></i> Используется сохраненная карта: ****{{ saved_card.usercards_card_last_four }}
+                                    <br><small><a href="{% url 'profile' %}">Изменить данные карты</a></small>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Способ доставки -->
+                        <div class="mb-3">
+                            <label for="{{ form.delivery_method.id_for_label }}" class="form-label">
+                                {{ form.delivery_method.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.delivery_method }}
+                            {% if form.delivery_method.errors %}
+                                <div class="text-danger small">{{ form.delivery_method.errors }}</div>
+                            {% endif %}
+                            {% if delivery_methods %}
+                            <small class="form-text text-muted">
+                                <i class="bi bi-info-circle"></i> Доступные способы доставки:
+                                <ul class="list-unstyled mt-2 mb-0">
+                                    {% for method in delivery_methods %}
+                                        {% with method_name_lower=method.delivery_methods_name|lower %}
+                                            {% if 'самовывоз' not in method_name_lower and 'pickup' not in method_name_lower and 'self_pickup' not in method_name_lower %}
+                                            <li>
+                                                {{ method }}
+                                                {% if method.delivery_methods_cost and method.delivery_methods_cost > 0 %}
+                                                    - {{ method.delivery_methods_cost|floatformat:2 }} ₽
+                                                {% else %}
+                                                    - Бесплатно
+                                                {% endif %}
+                                                {% if method.delivery_methods_description %}
+                                                    <br><small class="text-muted ms-3">{{ method.delivery_methods_description }}</small>
+                                                {% endif %}
+                                            </li>
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% endfor %}
+                                </ul>
+                            </small>
+                            {% endif %}
+                        </div>
+
+                        <!-- Адрес доставки -->
+                        <div class="mb-3">
+                            <label for="{{ form.street.id_for_label }}" class="form-label">
+                                {{ form.street.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.street }}
+                            {% if form.street.errors %}
+                                <div class="text-danger small">{{ form.street.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.city.id_for_label }}" class="form-label">
+                                    {{ form.city.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.city }}
+                                {% if form.city.errors %}
+                                    <div class="text-danger small">{{ form.city.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.zip_code.id_for_label }}" class="form-label">
+                                    {{ form.zip_code.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.zip_code }}
+                                {% if form.zip_code.errors %}
+                                    <div class="text-danger small">{{ form.zip_code.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.country.id_for_label }}" class="form-label">
+                                {{ form.country.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.country }}
+                            {% if form.country.errors %}
+                                <div class="text-danger small">{{ form.country.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Комментарий -->
+                        <div class="mb-3">
+                            <label for="{{ form.comment.id_for_label }}" class="form-label">
+                                {{ form.comment.label }}
+                            </label>
+                            {{ form.comment }}
+                            {% if form.comment.errors %}
+                                <div class="text-danger small">{{ form.comment.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-grid gap-2 checkout-cta">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-check-circle"></i> Подтвердить заказ
+                            </button>
+                            <a href="{% url 'cart' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Вернуться в корзину
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="checkout-card summary">
+                <div class="card-header">
+                    <h5 class="mb-0">Состав заказа</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm summary-table">
+                        <tbody>
+                            {% for item in cart_items %}
+                            <tr>
+                                <td>
+                                    <strong>{{ item.cart_items_product.products_name }}</strong><br>
+                                    <small class="text-muted">
+                                        {{ item.cart_items_quantity }} × {{ item.cart_items_product.products_price|floatformat:2 }} ₽
+                                    </small>
+                                </td>
+                                <td class="text-end">
+                                    <strong>
+                                        {% widthratio item.cart_items_quantity 1 item.cart_items_product.products_price as item_total %}
+                                        {{ item_total|floatformat:2 }} ₽
+                                    </strong>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td>Доставка:</td>
+                                <td class="text-end" id="delivery_cost">—</td>
+                            </tr>
+                            <tr>
+                                <td class="summary-total"><strong>Итого:</strong></td>
+                                <td class="text-end summary-total"><strong id="total_with_delivery">{{ total|floatformat:2 }} ₽</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                    <div class="hint small">Стоимость доставки обновится при выборе способа</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Создаем объект со стоимостью доставки для каждого способа
+const deliveryCosts = {};
+{% if delivery_info %}
+    {% for info in delivery_info %}
+deliveryCosts['{{ info.method.delivery_methods_id }}'] = {{ info.cost|default:0 }};
+deliveryCosts[{{ info.method.delivery_methods_id }}] = {{ info.cost|default:0 }};
+    {% endfor %}
+{% endif %}
+const baseTotal = parseFloat({{ total|default:0 }}) || 0;
+
+// Отладочная информация
+console.log('Инициализация доставки:', {
+    deliveryCosts: deliveryCosts,
+    baseTotal: baseTotal
+});
+
+function updateDeliveryCost() {
+    // Получаем select по name атрибуту (более надежный способ)
+    const deliverySelect = document.querySelector('select[name="delivery_method"]');
+    const deliveryCostEl = document.getElementById('delivery_cost');
+    const totalEl = document.getElementById('total_with_delivery');
+    
+    if (!deliverySelect || !deliveryCostEl || !totalEl) {
+        console.warn('Не найдены элементы для обновления стоимости доставки', {
+            select: !!deliverySelect,
+            costEl: !!deliveryCostEl,
+            totalEl: !!totalEl
+        });
+        return;
+    }
+    
+    const selectedId = deliverySelect.value;
+    
+    // Отладочная информация
+    console.log('Обновление стоимости доставки:', {
+        selectedId: selectedId,
+        deliveryCosts: deliveryCosts,
+        baseTotal: baseTotal
+    });
+    
+    if (!selectedId) {
+        // Если ничего не выбрано, показываем прочерк
+        deliveryCostEl.textContent = '—';
+        totalEl.textContent = baseTotal.toFixed(2) + ' ₽';
+        return;
+    }
+    
+    // Пробуем найти стоимость - проверяем и как строку, и как число
+    let cost = deliveryCosts[selectedId];
+    if (cost === undefined) {
+        // Пробуем найти по числовому ключу
+        cost = deliveryCosts[parseInt(selectedId)];
+    }
+    cost = parseFloat(cost) || 0;
+    
+    const totalWithDelivery = baseTotal + cost;
+    
+    console.log('Рассчитанная стоимость:', {
+        cost: cost,
+        totalWithDelivery: totalWithDelivery
+    });
+    
+    // Обновляем стоимость доставки
+    if (cost > 0) {
+        deliveryCostEl.textContent = cost.toFixed(2) + ' ₽';
+    } else {
+        deliveryCostEl.textContent = 'Бесплатно';
+    }
+    
+    // Обновляем итоговую сумму
+    totalEl.textContent = totalWithDelivery.toFixed(2) + ' ₽';
+}
+
+// Обновляем стоимость при изменении способа доставки
+function initDeliveryCost() {
+    const deliverySelect = document.querySelector('select[name="delivery_method"]');
+    if (deliverySelect) {
+        // Обновляем при изменении выбора
+        deliverySelect.addEventListener('change', function(){
+            updateDeliveryCost();
+        });
+        
+        // Инициализация сразу
+        updateDeliveryCost();
+    } else {
+        console.warn('Не найден элемент select для способа доставки');
+        // Пробуем еще раз через небольшую задержку
+        setTimeout(function() {
+            const retrySelect = document.querySelector('select[name="delivery_method"]');
+            if (retrySelect) {
+                retrySelect.addEventListener('change', function(){
+                    updateDeliveryCost();
+                });
+                updateDeliveryCost();
+            }
+        }, 200);
+    }
+}
+
+// Запускаем при загрузке DOM
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDeliveryCost);
+} else {
+    // DOM уже загружен
+    initDeliveryCost();
+}
+</script>
+{% endblock %}
+

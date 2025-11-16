@@ -1,0 +1,104 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block admin_title %}Пользователь: {{ user.users_email }}{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <h2><i class="bi bi-person"></i> Пользователь: {{ user.users_email }}</h2>
+    <p class="text-muted mb-0">
+        <a href="{% url 'admin_users' %}" class="text-decoration-none">
+            <i class="bi bi-arrow-left"></i> Вернуться к списку пользователей
+        </a>
+    </p>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <!-- Информация о пользователе -->
+        <div class="admin-card mb-3">
+            <h4><i class="bi bi-person-circle"></i> Информация</h4>
+            <p><strong>Email:</strong> {{ user.users_email }}</p>
+            <p><strong>Имя:</strong> {{ user.users_first_name }}</p>
+            <p><strong>Фамилия:</strong> {{ user.users_last_name }}</p>
+            {% if user.users_middle_name %}
+            <p><strong>Отчество:</strong> {{ user.users_middle_name }}</p>
+            {% endif %}
+            <p><strong>Телефон:</strong> {{ user.users_phone|default:"—" }}</p>
+            <p><strong>Дата регистрации:</strong> {{ user.users_created_at|date:"d.m.Y H:i"|default:"—" }}</p>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <!-- Заказы пользователя -->
+        <div class="admin-card mb-3">
+            <h4><i class="bi bi-receipt"></i> Заказы пользователя</h4>
+            {% if user_orders %}
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Дата</th>
+                            <th>Сумма</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in user_orders %}
+                        <tr>
+                            <td>#{{ order.orders_id }}</td>
+                            <td>{{ order.orders_date|date:"d.m.Y H:i" }}</td>
+                            <td>{{ order.orders_total_amount|floatformat:2 }} ₽</td>
+                            <td>
+                                <span class="badge bg-{% if order.orders_status.order_statuses_name == 'Новый' %}warning{% elif order.orders_status.order_statuses_name == 'Доставлен' %}success{% elif order.orders_status.order_statuses_name == 'Отменен' %}danger{% else %}info{% endif %}">
+                                    {{ order.orders_status.order_statuses_name }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{% url 'admin_order_detail' order.orders_id %}" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted">Заказы отсутствуют</p>
+            {% endif %}
+        </div>
+        
+        <!-- Корзина пользователя -->
+        <div class="admin-card">
+            <h4><i class="bi bi-cart"></i> Корзина пользователя</h4>
+            {% if cart_items %}
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Товар</th>
+                            <th>Количество</th>
+                            <th>Цена</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in cart_items %}
+                        <tr>
+                            <td>{{ item.cart_items_product.products_name }}</td>
+                            <td>{{ item.cart_items_quantity }} шт.</td>
+                            <td>{{ item.cart_items_product.products_price|floatformat:2 }} ₽</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted">Корзина пуста</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

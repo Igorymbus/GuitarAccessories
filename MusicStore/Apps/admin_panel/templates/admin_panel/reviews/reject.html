@@ -1,0 +1,56 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block admin_title %}Отклонение отзыва{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <h2><i class="bi bi-x-circle text-warning"></i> Отклонение отзыва</h2>
+</div>
+
+<div class="admin-card">
+    <div class="alert alert-warning">
+        <h5>Вы уверены, что хотите отклонить этот отзыв?</h5>
+        <p class="mb-0">После отклонения отзыв не будет опубликован и не будет виден пользователям.</p>
+    </div>
+    
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title">Отзыв #{{ review.reviews_id }}</h5>
+            <p class="card-text">
+                <strong>Товар:</strong> 
+                <a href="{% url 'product_detail' review.reviews_product.products_id %}" target="_blank">
+                    {{ review.reviews_product.products_name }}
+                </a><br>
+                <strong>Пользователь:</strong> {{ review.reviews_user.users_email }}<br>
+                <strong>Рейтинг:</strong> 
+                <span class="text-warning">
+                    {% for i in "12345" %}
+                        {% if forloop.counter <= review.reviews_rating %}
+                            <i class="bi bi-star-fill"></i>
+                        {% else %}
+                            <i class="bi bi-star"></i>
+                        {% endif %}
+                    {% endfor %}
+                </span>
+                ({{ review.reviews_rating }}/5)<br>
+                <strong>Дата:</strong> {{ review.reviews_date|date:"d.m.Y H:i" }}<br>
+                <strong>Отзыв:</strong><br>
+                <div class="mt-2 p-3 bg-light rounded">
+                    {{ review.reviews_comment|linebreaks }}
+                </div>
+            </p>
+        </div>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-warning">
+            <i class="bi bi-x-circle"></i> Да, отклонить отзыв
+        </button>
+        <a href="{% url 'admin_reviews' %}" class="btn btn-secondary">
+            <i class="bi bi-x"></i> Отмена
+        </a>
+    </form>
+</div>
+{% endblock %}
+

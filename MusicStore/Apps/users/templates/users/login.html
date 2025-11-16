@@ -1,0 +1,29 @@
+{% extends 'main/base.html' %}
+{% block title %}Вход - MusicStore{% endblock %}
+{% block content %}
+<div class="container py-5" style="max-width: 480px;">
+    <h2 class="mb-4">Вход</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <div class="mb-3">
+            <label class="form-label">Логин</label>
+            {{ form.username }}
+            {{ form.username.errors }}
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Пароль</label>
+            {{ form.password }}
+            {{ form.password.errors }}
+        </div>
+        <button class="btn btn-primary" type="submit">Войти</button>
+        <a class="btn btn-link" href="{% url 'register' %}">Регистрация</a>
+        <a class="btn btn-link" href="{% url 'password_reset_secret' %}">Забыли пароль?</a>
+    </form>
+    <script>
+        // Фолбек, если нет фильтра add_class
+        document.querySelectorAll('input').forEach(i=>i.classList.add('form-control'))
+    </script>
+</div>
+{% endblock %}
+

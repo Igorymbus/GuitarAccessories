@@ -1,0 +1,427 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block admin_title %}Аналитика{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .chart-container {
+        position: relative;
+        height: 400px;
+        margin-bottom: 2rem;
+    }
+    .chart-container-small {
+        position: relative;
+        height: 300px;
+        margin-bottom: 1rem;
+    }
+    .chart-container-mini {
+        position: relative;
+        height: 250px;
+        margin-bottom: 1rem;
+    }
+    .analytics-controls {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+    @media (max-width: 768px) {
+        .analytics-controls {
+            flex-direction: column;
+            width: 100%;
+        }
+        .analytics-controls .form-select,
+        .analytics-controls .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header d-flex justify-content-between align-items-center flex-wrap">
+    <div>
+        <h2 class="mb-0"><i class="bi bi-graph-up"></i> Аналитика продаж</h2>
+        <p class="text-muted mb-0">Период: {{ start_date|date:"d.m.Y" }} - {{ end_date|date:"d.m.Y" }}</p>
+    </div>
+    <div class="analytics-controls mt-2 mt-md-0">
+        <form method="get" class="d-inline">
+            <select name="days" class="form-select d-inline-block" style="width: auto;" onchange="this.form.submit()">
+                <option value="7" {% if days == 7 %}selected{% endif %}>Последние 7 дней</option>
+                <option value="30" {% if days == 30 %}selected{% endif %}>Последние 30 дней</option>
+                <option value="90" {% if days == 90 %}selected{% endif %}>Последние 90 дней</option>
+                <option value="365" {% if days == 365 %}selected{% endif %}>Последний год</option>
+            </select>
+        </form>
+        <a href="{% url 'admin_analytics_export_pdf' %}?days={{ days }}" class="btn btn-danger">
+            <i class="bi bi-file-pdf"></i> Экспорт в PDF
+        </a>
+    </div>
+</div>
+
+<!-- Статистика -->
+<div class="row">
+    <div class="col-md-4">
+        <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <h3>{{ total_orders }}</h3>
+            <p><i class="bi bi-receipt"></i> Всего заказов</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <h3>{{ total_revenue|floatformat:0 }} ₽</h3>
+            <p><i class="bi bi-currency-exchange"></i> Общая выручка</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            <h3>{{ avg_order_value|floatformat:0 }} ₽</h3>
+            <p><i class="bi bi-cart-check"></i> Средний чек</p>
+        </div>
+    </div>
+</div>
+
+<!-- График продаж по дням -->
+<div class="admin-card">
+    <h4 class="mb-3"><i class="bi bi-bar-chart"></i> Динамика продаж</h4>
+    <div class="chart-container">
+        <canvas id="salesChart"></canvas>
+    </div>
+</div>
+
+<!-- Топ товаров -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="admin-card">
+            <h4 class="mb-3"><i class="bi bi-trophy"></i> Топ-10 товаров</h4>
+            <div class="chart-container-small">
+                <canvas id="productsChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="admin-card">
+            <h4 class="mb-3"><i class="bi bi-folder"></i> Продажи по категориям</h4>
+            <div class="chart-container-small">
+                <canvas id="categoriesChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Статистика по статусам и способам оплаты/доставки -->
+<div class="row">
+    <div class="col-md-4">
+        <div class="admin-card">
+            <h4 class="mb-3"><i class="bi bi-list-check"></i> Заказы по статусам</h4>
+            <div class="chart-container-mini">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="admin-card">
+            <h4 class="mb-3"><i class="bi bi-credit-card"></i> Способы оплаты</h4>
+            <div class="chart-container-mini">
+                <canvas id="paymentChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="admin-card">
+            <h4 class="mb-3"><i class="bi bi-truck"></i> Способы доставки</h4>
+            <div class="chart-container-mini">
+                <canvas id="deliveryChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Данные для графиков
+    let dailyStats = [];
+    try {
+        const dailyStatsStr = '{{ daily_stats|escapejs }}';
+        if (dailyStatsStr && dailyStatsStr !== 'null') {
+            dailyStats = JSON.parse(dailyStatsStr);
+        }
+    } catch(e) {
+        console.error('Ошибка парсинга dailyStats:', e);
+        dailyStats = [];
+    }
+    
+    let topProducts = [];
+    let categoryStats = [];
+    let statusStats = [];
+    let paymentStats = [];
+    let deliveryStats = [];
+    
+    try {
+        topProducts = JSON.parse('{{ top_products|escapejs }}');
+    } catch(e) {
+        console.error('Ошибка парсинга topProducts:', e);
+    }
+    
+    try {
+        categoryStats = JSON.parse('{{ category_stats|escapejs }}');
+    } catch(e) {
+        console.error('Ошибка парсинга categoryStats:', e);
+    }
+    
+    try {
+        statusStats = JSON.parse('{{ status_stats|escapejs }}');
+    } catch(e) {
+        console.error('Ошибка парсинга statusStats:', e);
+    }
+    
+    try {
+        paymentStats = JSON.parse('{{ payment_stats|escapejs }}');
+    } catch(e) {
+        console.error('Ошибка парсинга paymentStats:', e);
+    }
+    
+    try {
+        deliveryStats = JSON.parse('{{ delivery_stats|escapejs }}');
+    } catch(e) {
+        console.error('Ошибка парсинга deliveryStats:', e);
+    }
+
+    // График динамики продаж
+    const salesCtx = document.getElementById('salesChart');
+    if (salesCtx) {
+        if (dailyStats && dailyStats.length > 0) {
+            new Chart(salesCtx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: dailyStats.map(d => d.date),
+                    datasets: [{
+                        label: 'Выручка (₽)',
+                        data: dailyStats.map(d => d.revenue || 0),
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        tension: 0.1,
+                        fill: true
+                    }, {
+                        label: 'Количество заказов',
+                        data: dailyStats.map(d => d.orders || 0),
+                        borderColor: 'rgb(255, 99, 132)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        yAxisID: 'y1',
+                        tension: 0.1,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Выручка (₽)'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Количество заказов'
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                        }
+                    }
+                }
+            });
+        } else {
+            salesCtx.parentElement.innerHTML = '<div class="alert alert-info text-center py-4"><i class="bi bi-info-circle"></i> Нет данных за выбранный период</div>';
+        }
+    }
+
+    // График топ товаров
+    const productsCtx = document.getElementById('productsChart');
+    if (productsCtx) {
+        if (topProducts && topProducts.length > 0) {
+            new Chart(productsCtx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: topProducts.map(p => {
+                        const name = p.order_items_product__products_name || '';
+                        return name.length > 20 ? name.substring(0, 20) + '...' : name;
+                    }),
+                    datasets: [{
+                        label: 'Количество продаж',
+                        data: topProducts.map(p => parseInt(p.total_quantity) || 0),
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        } else {
+            productsCtx.parentElement.innerHTML = '<div class="alert alert-info text-center py-4"><i class="bi bi-info-circle"></i> Нет данных</div>';
+        }
+    }
+
+    // График по категориям
+    const categoriesCtx = document.getElementById('categoriesChart');
+    if (categoriesCtx) {
+        if (categoryStats && categoryStats.length > 0) {
+            new Chart(categoriesCtx.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: categoryStats.map(c => c.order_items_product__products_category__categories_name || 'Без категории'),
+                    datasets: [{
+                        data: categoryStats.map(c => parseFloat(c.total_revenue) || 0),
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.6)',
+                            'rgba(54, 162, 235, 0.6)',
+                            'rgba(255, 206, 86, 0.6)',
+                            'rgba(75, 192, 192, 0.6)',
+                            'rgba(153, 102, 255, 0.6)',
+                            'rgba(255, 159, 64, 0.6)',
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        } else {
+            categoriesCtx.parentElement.innerHTML = '<div class="alert alert-info text-center py-4"><i class="bi bi-info-circle"></i> Нет данных</div>';
+        }
+    }
+
+    // График по статусам
+    const statusCtx = document.getElementById('statusChart');
+    if (statusCtx) {
+        if (statusStats && statusStats.length > 0) {
+            new Chart(statusCtx.getContext('2d'), {
+                type: 'pie',
+                data: {
+                    labels: statusStats.map(s => s.orders_status__order_statuses_name || 'Не указано'),
+                    datasets: [{
+                        data: statusStats.map(s => parseInt(s.count) || 0),
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.6)',
+                            'rgba(54, 162, 235, 0.6)',
+                            'rgba(255, 206, 86, 0.6)',
+                            'rgba(75, 192, 192, 0.6)',
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        } else {
+            statusCtx.parentElement.innerHTML = '<div class="alert alert-info text-center py-4"><i class="bi bi-info-circle"></i> Нет данных</div>';
+        }
+    }
+
+    // График по способам оплаты
+    const paymentCtx = document.getElementById('paymentChart');
+    if (paymentCtx) {
+        if (paymentStats && paymentStats.length > 0) {
+            new Chart(paymentCtx.getContext('2d'), {
+                type: 'pie',
+                data: {
+                    labels: paymentStats.map(p => p.orders_payment_method__payment_methods_name || 'Не указано'),
+                    datasets: [{
+                        data: paymentStats.map(p => parseInt(p.count) || 0),
+                        backgroundColor: [
+                            'rgba(75, 192, 192, 0.6)',
+                            'rgba(153, 102, 255, 0.6)',
+                            'rgba(255, 159, 64, 0.6)',
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        } else {
+            paymentCtx.parentElement.innerHTML = '<div class="alert alert-info text-center py-4"><i class="bi bi-info-circle"></i> Нет данных</div>';
+        }
+    }
+
+    // График по способам доставки
+    const deliveryCtx = document.getElementById('deliveryChart');
+    if (deliveryCtx) {
+        if (deliveryStats && deliveryStats.length > 0) {
+            new Chart(deliveryCtx.getContext('2d'), {
+                type: 'pie',
+                data: {
+                    labels: deliveryStats.map(d => d.orders_delivery_method__delivery_methods_name || 'Не указано'),
+                    datasets: [{
+                        data: deliveryStats.map(d => parseInt(d.count) || 0),
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.6)',
+                            'rgba(54, 162, 235, 0.6)',
+                            'rgba(255, 206, 86, 0.6)',
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        } else {
+            deliveryCtx.parentElement.innerHTML = '<div class="alert alert-info text-center py-4"><i class="bi bi-info-circle"></i> Нет данных</div>';
+        }
+    }
+});
+</script>
+{% endblock %}

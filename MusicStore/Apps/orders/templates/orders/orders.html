@@ -1,0 +1,98 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Мои заказы - MusicStore{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4"><i class="bi bi-receipt"></i> Мои заказы</h1>
+    
+    {% if orders_with_items %}
+    <div class="row">
+        {% for order_data in orders_with_items %}
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>Заказ №{{ order_data.order.orders_id }}</strong><br>
+                        <small class="text-muted">
+                            {{ order_data.order.orders_date|date:"d.m.Y H:i" }}
+                        </small>
+                    </div>
+                    <div>
+                        <span class="badge bg-primary">{{ order_data.order.orders_status.order_statuses_name }}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Товар</th>
+                                <th>Количество</th>
+                                <th>Цена</th>
+                                <th>Сумма</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order_data.items %}
+                            <tr>
+                                <td>
+                                    <strong>{{ item.order_items_product.products_name }}</strong><br>
+                                    <small class="text-muted">{{ item.order_items_product.products_brand.brands_name }}</small>
+                                </td>
+                                <td>{{ item.order_items_quantity }}</td>
+                                <td>{{ item.order_items_price_at_purchase|floatformat:2 }} ₽</td>
+                                <td>
+                                    <strong>
+                                        {% widthratio item.order_items_quantity 1 item.order_items_price_at_purchase as item_total %}
+                                        {{ item_total|floatformat:2 }} ₽
+                                    </strong>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            {% if order_data.delivery_cost > 0 %}
+                            <tr>
+                                <td colspan="3" class="text-end">Доставка:</td>
+                                <td>{{ order_data.delivery_cost|floatformat:2 }} ₽</td>
+                            </tr>
+                            {% endif %}
+                            <tr>
+                                <td colspan="3" class="text-end"><strong>Итого:</strong></td>
+                                <td><strong>{{ order_data.total|floatformat:2 }} ₽</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                    {% if order_data.order.orders_comment %}
+                    <div class="mt-2">
+                        <small class="text-muted"><strong>Комментарий:</strong> {{ order_data.order.orders_comment }}</small>
+                    </div>
+                    {% endif %}
+                    
+                    {% if order_data.can_cancel %}
+                    <div class="mt-3">
+                        <form method="post" action="{% url 'cancel_order' order_data.order.orders_id %}" onsubmit="return confirm('Вы уверены, что хотите отменить этот заказ? Товары будут возвращены на склад.');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm">
+                                <i class="bi bi-x-circle"></i> Отменить заказ
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center">
+        <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+        <h4 class="mt-3">У вас пока нет заказов</h4>
+        <p>Начните покупки в нашем каталоге</p>
+        <a href="{% url 'catalog' %}" class="btn btn-primary">
+            <i class="bi bi-cd"></i> Перейти в каталог
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

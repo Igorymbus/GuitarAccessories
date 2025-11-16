@@ -1,0 +1,234 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Профиль - MusicStore{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4"><i class="bi bi-person"></i> Мой профиль</h1>
+    
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Личная информация</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>Email:</strong></div>
+                        <div class="col-sm-8">{{ user_profile.users_email }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>Имя:</strong></div>
+                        <div class="col-sm-8">{{ user_profile.users_first_name }}</div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>Фамилия:</strong></div>
+                        <div class="col-sm-8">{{ user_profile.users_last_name }}</div>
+                    </div>
+                    {% if user_profile.users_middle_name %}
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>Отчество:</strong></div>
+                        <div class="col-sm-8">{{ user_profile.users_middle_name }}</div>
+                    </div>
+                    {% endif %}
+                    {% if user_profile.users_phone %}
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>Телефон:</strong></div>
+                        <div class="col-sm-8">{{ user_profile.users_phone }}</div>
+                    </div>
+                    {% endif %}
+                    {% if user_profile.users_created_at %}
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>Дата регистрации:</strong></div>
+                        <div class="col-sm-8">{{ user_profile.users_created_at|date:"d.m.Y H:i" }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Раздел "Банковская карта" -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-credit-card"></i> Банковская карта</h5>
+                </div>
+                <div class="card-body">
+                    {% if saved_card %}
+                        <div class="alert alert-info mb-3">
+                            <strong>Сохраненная карта:</strong><br>
+                            <i class="bi bi-credit-card"></i> ****{{ saved_card.usercards_card_last_four }}<br>
+                            <small class="text-muted">Держатель: {{ saved_card.usercards_card_holder_name }}</small>
+                        </div>
+                        <form method="post" class="mb-2">
+                            {% csrf_token %}
+                            <button type="submit" name="delete_card" class="btn btn-danger btn-sm" onclick="return confirm('Вы уверены, что хотите удалить сохраненную карту?');">
+                                <i class="bi bi-trash"></i> Удалить карту
+                            </button>
+                        </form>
+                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#cardFormCollapse" onclick="fillCardForm()">
+                            <i class="bi bi-pencil"></i> Изменить данные карты
+                        </button>
+                    {% else %}
+                        <p class="text-muted mb-3">У вас не сохранена банковская карта. Добавьте данные карты для быстрой оплаты при оформлении заказов.</p>
+                    {% endif %}
+                    
+                    <div class="collapse {% if not saved_card %}show{% endif %}" id="cardFormCollapse">
+                        <hr>
+                        <form method="post" id="cardForm">
+                            {% csrf_token %}
+                            <input type="hidden" name="card_form" value="1">
+                            
+                            <div class="mb-3">
+                                <label for="{{ card_form.card_number.id_for_label }}" class="form-label">
+                                    {{ card_form.card_number.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ card_form.card_number }}
+                                {% if card_form.card_number.errors %}
+                                    <div class="text-danger small">{{ card_form.card_number.errors }}</div>
+                                {% endif %}
+                                {% if saved_card and saved_card.usercards_card_last_four %}
+                                    <small class="form-text text-info">
+                                        <i class="bi bi-info-circle"></i> Сохраненная карта: ****{{ saved_card.usercards_card_last_four }}. 
+                                        Введите полный номер карты заново для обновления.
+                                    </small>
+                                {% endif %}
+                                {% if card_form.card_number.help_text %}
+                                    <small class="form-text text-muted">{{ card_form.card_number.help_text }}</small>
+                                {% endif %}
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ card_form.card_expiry.id_for_label }}" class="form-label">
+                                        {{ card_form.card_expiry.label }} <span class="text-danger">*</span>
+                                    </label>
+                                    {{ card_form.card_expiry }}
+                                    {% if card_form.card_expiry.errors %}
+                                        <div class="text-danger small">{{ card_form.card_expiry.errors }}</div>
+                                    {% endif %}
+                                    {% if card_form.card_expiry.help_text %}
+                                        <small class="form-text text-muted">{{ card_form.card_expiry.help_text }}</small>
+                                    {% endif %}
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="{{ card_form.card_cvv.id_for_label }}" class="form-label">
+                                        {{ card_form.card_cvv.label }} <span class="text-danger">*</span>
+                                    </label>
+                                    {{ card_form.card_cvv }}
+                                    {% if card_form.card_cvv.errors %}
+                                        <div class="text-danger small">{{ card_form.card_cvv.errors }}</div>
+                                    {% endif %}
+                                    {% if saved_card %}
+                                        <small class="form-text text-info">
+                                            <i class="bi bi-info-circle"></i> Введите CVV заново для обновления.
+                                        </small>
+                                    {% endif %}
+                                    {% if card_form.card_cvv.help_text %}
+                                        <small class="form-text text-muted">{{ card_form.card_cvv.help_text }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="{{ card_form.card_holder_name.id_for_label }}" class="form-label">
+                                    {{ card_form.card_holder_name.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ card_form.card_holder_name }}
+                                {% if card_form.card_holder_name.errors %}
+                                    <div class="text-danger small">{{ card_form.card_holder_name.errors }}</div>
+                                {% endif %}
+                                {% if card_form.card_holder_name.help_text %}
+                                    <small class="form-text text-muted">{{ card_form.card_holder_name.help_text }}</small>
+                                {% endif %}
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save"></i> Сохранить данные карты
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Действия</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{% url 'password_change' %}" class="btn btn-primary w-100 mb-2">
+                        <i class="bi bi-key"></i> Сменить пароль
+                    </a>
+                    <a href="{% url 'orders' %}" class="btn btn-outline-primary w-100 mb-2">
+                        <i class="bi bi-receipt"></i> Мои заказы
+                    </a>
+                    <a href="{% url 'cart' %}" class="btn btn-outline-primary w-100">
+                        <i class="bi bi-cart"></i> Корзина
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Форматирование номера карты (добавление пробелов каждые 4 цифры)
+    const cardNumberInput = document.getElementById('{{ card_form.card_number.id_for_label }}');
+    if (cardNumberInput) {
+        cardNumberInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\s/g, ''); // Убираем пробелы
+            value = value.replace(/\D/g, ''); // Убираем нецифровые символы
+            let formatted = '';
+            for (let i = 0; i < value.length && i < 16; i++) {
+                if (i > 0 && i % 4 === 0) {
+                    formatted += ' ';
+                }
+                formatted += value[i];
+            }
+            e.target.value = formatted;
+        });
+    }
+    
+    // Форматирование срока действия карты (MM/YY)
+    const cardExpiryInput = document.getElementById('{{ card_form.card_expiry.id_for_label }}');
+    if (cardExpiryInput) {
+        cardExpiryInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, ''); // Убираем нецифровые символы
+            if (value.length >= 2) {
+                value = value.substring(0, 2) + '/' + value.substring(2, 4);
+            }
+            e.target.value = value;
+        });
+    }
+    
+    // Ограничение CVV только цифрами
+    const cardCvvInput = document.getElementById('{{ card_form.card_cvv.id_for_label }}');
+    if (cardCvvInput) {
+        cardCvvInput.addEventListener('input', function(e) {
+            e.target.value = e.target.value.replace(/\D/g, '').substring(0, 3);
+        });
+    }
+    
+    // Автоматическое преобразование имени держателя в верхний регистр
+    const cardHolderInput = document.getElementById('{{ card_form.card_holder_name.id_for_label }}');
+    if (cardHolderInput) {
+        cardHolderInput.addEventListener('input', function(e) {
+            // Разрешаем только латинские буквы, пробелы и дефисы
+            e.target.value = e.target.value.replace(/[^A-Za-z\s\-]/g, '').toUpperCase();
+        });
+    }
+    
+    // Функция для заполнения формы при нажатии "Изменить данные карты"
+    function fillCardForm() {
+        // Форма уже заполнена через initial в Django, но убеждаемся что поля видны
+        const cardFormCollapse = document.getElementById('cardFormCollapse');
+        if (cardFormCollapse) {
+            // Если форма скрыта, она откроется через Bootstrap collapse
+            // Если уже открыта, данные уже должны быть в полях через initial
+        }
+    }
+});
+</script>
+{% endblock %}
+

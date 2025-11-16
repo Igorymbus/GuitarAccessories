@@ -1,0 +1,41 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block admin_title %}Удаление категории{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <h2><i class="bi bi-exclamation-triangle text-danger"></i> Удаление категории</h2>
+</div>
+
+<div class="admin-card">
+    <div class="alert alert-warning">
+        <h5>Вы уверены, что хотите удалить эту категорию?</h5>
+        <p class="mb-0">Это действие нельзя отменить. Все связанные данные также будут удалены.</p>
+    </div>
+    
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title">{{ category.categories_name }}</h5>
+            <p class="card-text">
+                {% if category.categories_parent %}
+                    <strong>Родительская категория:</strong> {{ category.categories_parent.categories_name }}<br>
+                {% endif %}
+                {% if category.categories_description %}
+                    <strong>Описание:</strong> {{ category.categories_description }}
+                {% endif %}
+            </p>
+        </div>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">
+            <i class="bi bi-trash"></i> Да, удалить
+        </button>
+        <a href="{% url 'admin_categories' %}" class="btn btn-secondary">
+            <i class="bi bi-x"></i> Отмена
+        </a>
+    </form>
+</div>
+{% endblock %}
+

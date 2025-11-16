@@ -1,0 +1,65 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block admin_title %}{{ action }} бренд{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <h2><i class="bi bi-tag"></i> {{ action }} бренд</h2>
+    <p class="text-muted mb-0">
+        <a href="{% url 'admin_brands' %}" class="text-decoration-none">
+            <i class="bi bi-arrow-left"></i> Вернуться к списку брендов
+        </a>
+    </p>
+</div>
+
+<div class="admin-card">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+            <label for="{{ form.brands_name.id_for_label }}" class="form-label">
+                {{ form.brands_name.label }} <span class="text-danger">*</span>
+            </label>
+            {{ form.brands_name }}
+            {% if form.brands_name.errors %}
+                <div class="text-danger small">{{ form.brands_name.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="mb-3">
+            <label for="{{ form.brands_description.id_for_label }}" class="form-label">
+                {{ form.brands_description.label }}
+            </label>
+            {{ form.brands_description }}
+            {% if form.brands_description.errors %}
+                <div class="text-danger small">{{ form.brands_description.errors }}</div>
+            {% endif %}
+        </div>
+        
+        <div class="mb-3">
+            <label for="{{ form.image_file.id_for_label }}" class="form-label">
+                {{ form.image_file.label }}
+            </label>
+            {{ form.image_file }}
+            {% if form.image_file.errors %}
+                <div class="text-danger small">{{ form.image_file.errors }}</div>
+            {% endif %}
+            {% if brand and brand.brands_logo_url %}
+            <div class="mt-2">
+                <img src="{{ brand.brands_logo_url }}" alt="{{ brand.brands_name }}" style="max-height: 100px;" onerror="this.style.display='none'">
+            </div>
+            {% endif %}
+        </div>
+        
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save"></i> Сохранить
+            </button>
+            <a href="{% url 'admin_brands' %}" class="btn btn-secondary">
+                <i class="bi bi-x"></i> Отмена
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

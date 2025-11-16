@@ -1,0 +1,163 @@
+{% extends 'main/base.html' %}
+
+{% load catalog_extras %}
+{% block title %}Каталог - MusicStore{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4"><i class="bi bi-cd"></i> Каталог товаров</h1>
+    
+    <!-- Фильтры и поиск -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Поиск</label>
+                    <input type="text" name="search" class="form-control" placeholder="Название товара..." value="{% if search_query %}{{ search_query }}{% endif %}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Категория</label>
+                    <select name="category" class="form-select">
+                        <option value="">Все категории</option>
+                        {% for category in categories %}
+                            {% if not category.categories_parent_id %}
+                                <option value="{{ category.categories_id }}" {% if selected_category == category.categories_id|stringformat:"s" %}selected{% endif %}>
+                                    {{ category.categories_name }}
+                                </option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Бренд</label>
+                    <select name="brand" class="form-select">
+                        <option value="">Все бренды</option>
+                        {% for brand in brands %}
+                            <option value="{{ brand.brands_id }}" {% if selected_brand == brand.brands_id|stringformat:"s" %}selected{% endif %}>
+                                {{ brand.brands_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">
+                        <i class="bi bi-sort-alpha-down"></i> Сортировка
+                    </label>
+                    <select name="sort" class="form-select" id="sortSelect" onchange="this.form.submit()">
+                        <option value="default" {% if sort_by == 'default' %}selected{% endif %}>По умолчанию</option>
+                        <optgroup label="По цене">
+                            <option value="price_asc" {% if sort_by == 'price_asc' %}selected{% endif %}>От дешевых к дорогим</option>
+                            <option value="price_desc" {% if sort_by == 'price_desc' %}selected{% endif %}>От дорогих к дешевым</option>
+                        </optgroup>
+                        <optgroup label="По названию">
+                            <option value="name_asc" {% if sort_by == 'name_asc' %}selected{% endif %}>А-Я</option>
+                            <option value="name_desc" {% if sort_by == 'name_desc' %}selected{% endif %}>Я-А</option>
+                        </optgroup>
+                        <optgroup label="По дате">
+                            <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Новые сначала</option>
+                            <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Старые сначала</option>
+                        </optgroup>
+                        <optgroup label="По наличию">
+                            <option value="stock_desc" {% if sort_by == 'stock_desc' %}selected{% endif %}>Больше на складе</option>
+                            <option value="stock_asc" {% if sort_by == 'stock_asc' %}selected{% endif %}>Меньше на складе</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">Применить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Информация о количестве и сортировке -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <span class="text-muted">
+                <i class="bi bi-box-seam"></i> Найдено товаров: <strong>{{ products_count }}</strong>
+            </span>
+        </div>
+        {% if sort_by != 'default' %}
+        <div>
+            <span class="badge bg-info">
+                <i class="bi bi-funnel-fill"></i> Сортировка применена
+            </span>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Список товаров -->
+    {% if products_count > 0 %}
+    <div class="row g-4">
+        {% for product in products %}
+        <div class="col-md-3 col-sm-6">
+            <div class="card h-100" style="cursor: pointer;" onclick="window.location.href='{% url 'product_detail' product.products_id %}'">
+                {% with img=images_by_product|get_item:product.products_id %}
+                {% if img %}
+                <img src="{{ img }}" class="card-img-top" alt="{{ product.products_name }}" style="height: 200px; object-fit: cover;" onerror="this.src='https://via.placeholder.com/400x200?text=No+Image'">
+                {% else %}
+                <div class="product-image d-flex align-items-center justify-content-center" style="height: 200px; background:#f8f9fa;">
+                    <i class="bi bi-music-note-beamed" style="font-size: 48px; color:#adb5bd;"></i>
+                </div>
+                {% endif %}
+                {% endwith %}
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <a href="{% url 'product_detail' product.products_id %}" class="text-decoration-none text-dark">
+                            {{ product.products_name|truncatewords:5 }}
+                        </a>
+                    </h5>
+                    <p class="card-text">
+                        <small class="text-muted">
+                            {{ product.products_brand.brands_name }} / {{ product.products_category.categories_name }}
+                        </small>
+                    </p>
+                    {% if product.products_description %}
+                    <p class="card-text small text-muted">{{ product.products_description|truncatewords:10 }}</p>
+                    {% endif %}
+                    <div class="d-flex justify-content-between align-items-center mt-auto">
+                        <span class="h5 text-primary mb-0">
+                            {{ product.products_price|floatformat:2 }} ₽
+                        </span>
+                        <div class="btn-group" role="group" onclick="event.stopPropagation();">
+                            {% if user.is_authenticated %}
+                                {% if product.products_id in favorite_ids %}
+                                    <a href="{% url 'remove_from_favorites' product.products_id %}?next=catalog" class="btn btn-outline-danger btn-sm" title="Удалить из избранного">
+                                        <i class="bi bi-heart-fill"></i>
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'add_to_favorites' product.products_id %}?next=catalog" class="btn btn-outline-secondary btn-sm" title="Добавить в избранное">
+                                        <i class="bi bi-heart"></i>
+                                    </a>
+                                {% endif %}
+                                <a href="{% url 'add_to_cart' product.products_id %}?next=catalog" class="btn btn-primary btn-sm" title="Добавить в корзину">
+                                    <i class="bi bi-cart-plus"></i>
+                                </a>
+                            {% else %}
+                                <a href="{% url 'login' %}" class="btn btn-outline-secondary btn-sm" title="Войдите, чтобы добавить в избранное">
+                                    <i class="bi bi-heart"></i>
+                                </a>
+                                <a href="{% url 'login' %}" class="btn btn-outline-primary btn-sm" title="Войдите, чтобы добавить в корзину">
+                                    <i class="bi bi-cart-plus"></i>
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <small class="text-muted d-block mt-2">
+                        <i class="bi bi-box"></i> В наличии: {{ product.products_stock }} шт.
+                    </small>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center">
+        <i class="bi bi-info-circle"></i> Товары не найдены
+        {% if selected_category or selected_brand or search_query %}
+        <br><small class="text-muted mt-2 d-block">Попробуйте изменить фильтры или поисковый запрос</small>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

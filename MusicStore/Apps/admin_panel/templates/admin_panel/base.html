@@ -1,0 +1,254 @@
+{% extends 'main/base.html' %}
+
+{% block title %}{% block admin_title %}Админ-панель{% endblock %} - MusicStore{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ГОСТ: Единое оформление админ-панели - темная боковая панель */
+    .admin-sidebar,
+    .col-md-2.admin-sidebar,
+    div.admin-sidebar,
+    [class*="admin-sidebar"] {
+        min-height: calc(100vh - 56px) !important;
+        background: #1a1d29 !important;
+        background-color: #1a1d29 !important;
+        color: rgba(255, 255, 255, 0.9) !important;
+        padding: 0 !important;
+        border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
+    }
+    .admin-sidebar h4,
+    .col-md-2.admin-sidebar h4,
+    div.admin-sidebar h4,
+    [class*="admin-sidebar"] h4 {
+        color: rgba(255, 255, 255, 0.95) !important;
+        font-weight: 600 !important;
+        padding: 20px 20px 15px 20px !important;
+        margin: 0 !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+        font-size: 1.1rem !important;
+    }
+    .admin-sidebar .nav,
+    .col-md-2.admin-sidebar .nav,
+    div.admin-sidebar .nav,
+    [class*="admin-sidebar"] .nav {
+        padding: 10px 0 !important;
+    }
+    .admin-sidebar .nav-link,
+    .col-md-2.admin-sidebar .nav-link,
+    div.admin-sidebar .nav-link,
+    [class*="admin-sidebar"] .nav-link {
+        color: rgba(255, 255, 255, 0.75) !important;
+        padding: 12px 20px !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+        transition: all 0.2s ease !important;
+        border-left: 3px solid transparent !important;
+        font-size: 0.95rem !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+    .admin-sidebar .nav-link:hover,
+    .col-md-2.admin-sidebar .nav-link:hover,
+    div.admin-sidebar .nav-link:hover,
+    [class*="admin-sidebar"] .nav-link:hover {
+        background: rgba(255, 255, 255, 0.05) !important;
+        color: rgba(255, 255, 255, 0.95) !important;
+        border-left-color: rgba(255, 255, 255, 0.2) !important;
+    }
+    .admin-sidebar .nav-link.active,
+    .col-md-2.admin-sidebar .nav-link.active,
+    div.admin-sidebar .nav-link.active,
+    [class*="admin-sidebar"] .nav-link.active {
+        background: rgba(31, 111, 235, 0.15) !important;
+        color: #ffffff !important;
+        border-left-color: #1f6feb !important;
+        font-weight: 500 !important;
+    }
+    .admin-sidebar .nav-link i,
+    .col-md-2.admin-sidebar .nav-link i,
+    div.admin-sidebar .nav-link i,
+    [class*="admin-sidebar"] .nav-link i {
+        margin-right: 12px !important;
+        width: 20px !important;
+        font-size: 1.1rem !important;
+        opacity: 0.9 !important;
+        color: inherit !important;
+    }
+    .admin-sidebar .nav-link.active i,
+    .col-md-2.admin-sidebar .nav-link.active i,
+    div.admin-sidebar .nav-link.active i,
+    [class*="admin-sidebar"] .nav-link.active i {
+        opacity: 1 !important;
+        color: inherit !important;
+    }
+    .admin-sidebar hr,
+    .col-md-2.admin-sidebar hr,
+    div.admin-sidebar hr,
+    [class*="admin-sidebar"] hr {
+        margin: 8px 20px !important;
+        border-color: rgba(255, 255, 255, 0.1) !important;
+        opacity: 1 !important;
+    }
+    
+    /* Принудительное применение темной темы для всех элементов боковой панели */
+    .admin-sidebar *,
+    .col-md-2.admin-sidebar *,
+    div.admin-sidebar *,
+    [class*="admin-sidebar"] * {
+        color: rgba(255, 255, 255, 0.75) !important;
+    }
+    .admin-sidebar h4 *,
+    .col-md-2.admin-sidebar h4 *,
+    div.admin-sidebar h4 *,
+    [class*="admin-sidebar"] h4 * {
+        color: rgba(255, 255, 255, 0.95) !important;
+    }
+    .admin-sidebar .nav-link.active *,
+    .col-md-2.admin-sidebar .nav-link.active *,
+    div.admin-sidebar .nav-link.active *,
+    [class*="admin-sidebar"] .nav-link.active * {
+        color: #ffffff !important;
+    }
+    /* ГОСТ: Единое оформление контентной области */
+    .admin-content {
+        background: #f8f9fa !important;
+        min-height: calc(100vh - 56px) !important;
+        padding: 30px !important;
+    }
+    .admin-header {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .admin-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .stat-card h3 {
+        font-size: 2.5rem;
+        margin: 10px 0;
+    }
+    .stat-card p {
+        margin: 0;
+        opacity: 0.9;
+    }
+    .table-admin {
+        background: white;
+    }
+    .btn-admin {
+        border-radius: 5px;
+        padding: 8px 20px;
+    }
+
+    /* Красивые быстрые кнопки */
+    .btn-quick {
+        color: #fff !important;
+        border: none;
+        border-radius: 12px;
+        padding: 12px 24px;
+        font-weight: 600;
+        letter-spacing: .2px;
+        box-shadow: 0 6px 18px rgba(0,0,0,.12);
+        transition: transform .12s ease, box-shadow .2s ease, filter .2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .btn-quick:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 24px rgba(0,0,0,.18);
+        filter: brightness(1.03);
+    }
+    .btn-quick:active {
+        transform: translateY(0);
+        box-shadow: 0 6px 18px rgba(0,0,0,.12);
+    }
+    .btn-quick i { font-size: 1.1rem; }
+
+    .btn-quick-purple { background: linear-gradient(135deg,#7b5cff 0%, #6a5af9 40%, #8a72ff 100%); }
+    .btn-quick-green  { background: linear-gradient(135deg,#1fa87a 0%, #199d70 50%, #3ccf9b 100%); }
+    .btn-quick-cyan   { background: linear-gradient(135deg,#0fb9de 0%, #07a5cc 50%, #35d0ff 100%); }
+    .btn-quick-amber  { background: linear-gradient(135deg,#f6b20a 0%, #f4a000 50%, #ffc542 100%); color:#1f2d3d!important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Боковая панель -->
+        <div class="col-md-2 admin-sidebar" style="background: #1a1d29 !important; color: rgba(255, 255, 255, 0.9) !important;">
+            <h4 style="color: rgba(255, 255, 255, 0.95) !important;">
+                <i class="bi bi-gear"></i> Админ-панель
+            </h4>
+            <nav class="nav flex-column" style="color: rgba(255, 255, 255, 0.75) !important;">
+                <a class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}" href="{% url 'admin_dashboard' %}" style="color: rgba(255, 255, 255, 0.75) !important;">
+                    <i class="bi bi-speedometer2" style="color: inherit !important;"></i> Дашборд
+                </a>
+                <a class="nav-link {% if 'admin_product' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'admin_products' %}" style="color: rgba(255, 255, 255, 0.75) !important;">
+                    <i class="bi bi-box" style="color: inherit !important;"></i> Товары
+                </a>
+                <a class="nav-link {% if 'admin_category' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'admin_categories' %}" style="color: rgba(255, 255, 255, 0.75) !important;">
+                    <i class="bi bi-folder" style="color: inherit !important;"></i> Категории
+                </a>
+                <a class="nav-link {% if 'admin_brand' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'admin_brands' %}" style="color: rgba(255, 255, 255, 0.75) !important;">
+                    <i class="bi bi-tag" style="color: inherit !important;"></i> Бренды
+                </a>
+                <a class="nav-link {% if 'admin_order' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'admin_orders' %}" style="color: rgba(255, 255, 255, 0.75) !important;">
+                    <i class="bi bi-receipt" style="color: inherit !important;"></i> Заказы
+                </a>
+                <a class="nav-link {% if 'admin_user' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'admin_users' %}" style="color: rgba(255, 255, 255, 0.75) !important;">
+                    <i class="bi bi-people" style="color: inherit !important;"></i> Пользователи
+                </a>
+                <hr class="my-3" style="border-color: rgba(255,255,255,0.1) !important; opacity: 1 !important;">
+                <a class="nav-link {% if 'admin_order_status' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'admin_order_statuses' %}" style="color: rgba(255, 255, 255, 0.75) !important;">
+                    <i class="bi bi-list-check" style="color: inherit !important;"></i> Статусы заказов
+                </a>
+                <a class="nav-link {% if 'admin_payment_method' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'admin_payment_methods' %}" style="color: rgba(255, 255, 255, 0.75) !important;">
+                    <i class="bi bi-credit-card" style="color: inherit !important;"></i> Способы оплаты
+                </a>
+                <a class="nav-link {% if 'admin_delivery_method' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'admin_delivery_methods' %}" style="color: rgba(255, 255, 255, 0.75) !important;">
+                    <i class="bi bi-truck" style="color: inherit !important;"></i> Способы доставки
+                </a>
+                <a class="nav-link {% if 'admin_review' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'admin_reviews' %}" style="color: rgba(255, 255, 255, 0.75) !important;">
+                    <i class="bi bi-chat-left-text" style="color: inherit !important;"></i> Отзывы
+                </a>
+                <a class="nav-link {% if 'admin_analytics' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'admin_analytics' %}" style="color: rgba(255, 255, 255, 0.75) !important;">
+                    <i class="bi bi-graph-up" style="color: inherit !important;"></i> Аналитика
+                </a>
+                <hr class="my-3" style="border-color: rgba(255,255,255,0.1) !important; opacity: 1 !important;">
+                <a class="nav-link" href="{% url 'home' %}" style="color: rgba(255, 255, 255, 0.75) !important;">
+                    <i class="bi bi-arrow-left" style="color: inherit !important;"></i> На сайт
+                </a>
+            </nav>
+        </div>
+        
+        <!-- Основной контент -->
+        <div class="col-md-10 admin-content">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            {% block admin_content %}{% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

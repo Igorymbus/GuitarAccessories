@@ -1,0 +1,36 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block admin_title %}Удаление бренда{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <h2><i class="bi bi-exclamation-triangle text-danger"></i> Удаление бренда</h2>
+</div>
+
+<div class="admin-card">
+    <div class="alert alert-warning">
+        <h5>Вы уверены, что хотите удалить этот бренд?</h5>
+        <p class="mb-0">Это действие нельзя отменить. Все связанные данные также будут удалены.</p>
+    </div>
+    
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title">{{ brand.brands_name }}</h5>
+            {% if brand.brands_description %}
+            <p class="card-text">{{ brand.brands_description }}</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">
+            <i class="bi bi-trash"></i> Да, удалить
+        </button>
+        <a href="{% url 'admin_brands' %}" class="btn btn-secondary">
+            <i class="bi bi-x"></i> Отмена
+        </a>
+    </form>
+</div>
+{% endblock %}
+

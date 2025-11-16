@@ -1,0 +1,39 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block admin_title %}{{ action }} статус заказа{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <h2><i class="bi bi-list-check"></i> {{ action }} статус заказа</h2>
+    <p class="text-muted mb-0">
+        <a href="{% url 'admin_order_statuses' %}" class="text-decoration-none">
+            <i class="bi bi-arrow-left"></i> Вернуться к списку статусов
+        </a>
+    </p>
+</div>
+
+<div class="admin-card">
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+            <label for="order_statuses_name" class="form-label">
+                Название статуса <span class="text-danger">*</span>
+            </label>
+            <input type="text" class="form-control" id="order_statuses_name" name="order_statuses_name" 
+                   value="{% if status %}{{ status.order_statuses_name }}{% endif %}" required>
+            <small class="form-text text-muted">Например: Новый, В обработке, Отправлен, Доставлен, Отменен</small>
+        </div>
+        
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save"></i> Сохранить
+            </button>
+            <a href="{% url 'admin_order_statuses' %}" class="btn btn-secondary">
+                <i class="bi bi-x"></i> Отмена
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
